@@ -48,6 +48,7 @@ func main() {
 	slips.Use(middleware.AuthRequired())
 	{
 		slips.POST("/upload", handlers.UploadSlip)
+		slips.GET("/report", handlers.GetSlipReport)
 	}
 
 	srv := &http.Server{

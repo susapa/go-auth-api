@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/user/go-auth-api/db"
+	"github.com/user/go-auth-api/models"
+	"github.com/user/go-auth-api/repository"
 )
 
 const (
@@ -25,6 +28,8 @@ var allowedMIME = map[string]string{
 }
 
 func UploadSlip(c *gin.Context) {
+	claims := c.MustGet("claims").(*models.Claims)
+
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadSize)
 
 	file, err := c.FormFile("file")
@@ -58,12 +63,25 @@ func UploadSlip(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message":  "slip uploaded successfully",
-		"filename": filename,
-		"path":     dst,
-		"size":     file.Size,
-	})
+	record, err := repository.SaveSlipUpload(db.Get(), claims.UserID, filename, dst, file.Size)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log upload"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, record)
+}
+
+func GetSlipReport(c *gin.Context) {
+	claims := c.MustGet("claims").(*models.Claims)
+
+	uploads, err := repository.GetSlipUploadsByUser(db.Get(), claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch report"})
+		return
+	}
+
+	c.JSON(http.StatusOK, uploads)
 }
 
 func sanitize(name string) string {
