@@ -44,6 +44,12 @@ func main() {
 		protected.GET("/me", handlers.Me)
 	}
 
+	slips := r.Group("/slips")
+	slips.Use(middleware.AuthRequired())
+	{
+		slips.POST("/upload", handlers.UploadSlip)
+	}
+
 	srv := &http.Server{
 		Addr:    ":" + config.C.Port,
 		Handler: r,
