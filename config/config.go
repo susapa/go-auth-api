@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Env                    string
 	Port                   string
 	DatabaseURL            string
 	JWTSecret              string
@@ -23,14 +25,23 @@ type Config struct {
 var C Config
 
 func Load() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("no .env file found, reading from environment")
+	env := getEnv("APP_ENV", "development")
+
+	// โหลด .env.<APP_ENV> ก่อน แล้ว fallback ไป .env
+	envFile := fmt.Sprintf(".env.%s", env)
+	if err := godotenv.Load(envFile); err != nil {
+		if err := godotenv.Load(".env"); err != nil {
+			log.Printf("no %s or .env file found, reading from environment", envFile)
+		}
+	} else {
+		log.Printf("loaded config from %s", envFile)
 	}
 
 	jwtExpiry, _ := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
 	refreshExpiry, _ := strconv.Atoi(getEnv("REFRESH_TOKEN_EXPIRY_DAYS", "7"))
 
 	C = Config{
+		Env:                    env,
 		Port:                   getEnv("PORT", "8080"),
 		DatabaseURL:            mustGetEnv("DATABASE_URL"),
 		JWTSecret:              mustGetEnv("JWT_SECRET"),
