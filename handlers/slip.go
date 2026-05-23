@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -12,12 +11,10 @@ import (
 	"github.com/user/go-auth-api/db"
 	"github.com/user/go-auth-api/models"
 	"github.com/user/go-auth-api/repository"
+	"github.com/user/go-auth-api/storage"
 )
 
-const (
-	maxUploadSize = 10 << 20 // 10 MB
-	uploadDir     = "uploads/slips"
-)
+const maxUploadSize = 10 << 20 // 10 MB
 
 var allowedMIME = map[string]string{
 	"image/jpeg":      ".jpg",
@@ -50,20 +47,22 @@ func UploadSlip(c *gin.Context) {
 		return
 	}
 
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create upload directory"})
+	blobName := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), sanitize(file.Filename), ext)
+
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open file"})
+		return
+	}
+	defer src.Close()
+
+	blobURL, err := storage.Upload(c.Request.Context(), blobName, src, contentType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload file"})
 		return
 	}
 
-	filename := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), sanitize(file.Filename), ext)
-	dst := filepath.Join(uploadDir, filename)
-
-	if err := c.SaveUploadedFile(file, dst); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file"})
-		return
-	}
-
-	record, err := repository.SaveSlipUpload(db.Get(), claims.UserID, filename, dst, file.Size)
+	record, err := repository.SaveSlipUpload(db.Get(), claims.UserID, blobName, blobURL, file.Size)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log upload"})
 		return

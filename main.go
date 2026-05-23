@@ -15,11 +15,20 @@ import (
 	"github.com/user/go-auth-api/handlers"
 	"github.com/user/go-auth-api/jobs"
 	"github.com/user/go-auth-api/middleware"
+	"github.com/user/go-auth-api/storage"
 )
 
 func main() {
 	config.Load()
 	db.Init(config.C.DatabaseURL)
+
+	if err := storage.Init(
+		config.C.AzureStorageConnStr,
+		config.C.AzureStorageContainer,
+		config.C.AzureStorageAccount,
+	); err != nil {
+		log.Fatalf("blob storage init failed: %v", err)
+	}
 
 	// context สำหรับ background jobs — cancel ตอน shutdown
 	ctx, cancel := context.WithCancel(context.Background())
