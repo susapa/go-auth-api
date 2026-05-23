@@ -21,7 +21,13 @@ func DeleteAllRefreshTokensByUser(db *sql.DB, userID int64) error {
 
 func LogRefreshTokenStats(db *sql.DB) {
 	var total, expired int
-	db.QueryRow(`SELECT COUNT(*) FROM refresh_tokens`).Scan(&total)
-	db.QueryRow(`SELECT COUNT(*) FROM refresh_tokens WHERE expires_at < NOW()`).Scan(&expired)
+	if err := db.QueryRow(`SELECT COUNT(*) FROM refresh_tokens`).Scan(&total); err != nil {
+		log.Printf("[token-cleanup] failed to get total count: %v", err)
+		return
+	}
+	if err := db.QueryRow(`SELECT COUNT(*) FROM refresh_tokens WHERE expires_at < NOW()`).Scan(&expired); err != nil {
+		log.Printf("[token-cleanup] failed to get expired count: %v", err)
+		return
+	}
 	log.Printf("[token-cleanup] stats: total=%d expired=%d", total, expired)
 }
