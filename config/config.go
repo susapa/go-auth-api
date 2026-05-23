@@ -15,6 +15,9 @@ type Config struct {
 	JWTExpiryHours         int
 	RefreshTokenExpiryDays int
 	AllowedOrigins         string
+	AzureStorageConnStr    string
+	AzureStorageContainer  string
+	AzureStorageAccount    string
 }
 
 var C Config
@@ -34,6 +37,9 @@ func Load() {
 		JWTExpiryHours:         jwtExpiry,
 		RefreshTokenExpiryDays: refreshExpiry,
 		AllowedOrigins:         getEnv("ALLOWED_ORIGINS", "http://localhost:4200"),
+		AzureStorageConnStr:    mustGetEnv("AZURE_STORAGE_CONNECTION_STRING"),
+		AzureStorageContainer:  getEnv("AZURE_STORAGE_CONTAINER", "slips"),
+		AzureStorageAccount:    mustGetEnv("AZURE_STORAGE_ACCOUNT_NAME"),
 	}
 }
 

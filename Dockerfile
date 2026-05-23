@@ -29,8 +29,7 @@ WORKDIR /app
 
 COPY --from=builder /app/server .
 
-# TODO: remove this dir once slip uploads are migrated to Azure Blob Storage
-RUN mkdir -p uploads/slips && chown -R appuser:appgroup /app
+RUN chown -R appuser:appgroup /app
 
 USER appuser
 
