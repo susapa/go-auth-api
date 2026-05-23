@@ -47,9 +47,9 @@ jobs:
             --target-port 8080 \
             --ingress external \
             --env-vars \
-              DATABASE_URL=secretref:database-url \
-              JWT_SECRET=secretref:jwt-secret \
-              ALLOWED_ORIGINS=secretref:allowed-origins \
+              "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}" \
           || \
           az containerapp update \
             --name ${{ secrets.CONTAINER_APP_NAME }} \
