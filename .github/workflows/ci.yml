@@ -32,7 +32,3 @@ jobs:
         with:
           version: latest
           args: --timeout=5m
-
-      # TODO: uncomment เมื่อมี tests
-      # - name: Run tests
-      #   run: go test -race -coverprofile=coverage.out ./...

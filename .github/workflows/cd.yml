@@ -36,21 +36,6 @@ jobs:
 
       - name: Deploy to Azure Container Apps
         run: |
-          az containerapp create \
-            --name ${{ secrets.CONTAINER_APP_NAME }} \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --environment ${{ secrets.CONTAINER_APP_ENV }} \
-            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            --registry-server ${{ secrets.ACR_LOGIN_SERVER }} \
-            --registry-username ${{ secrets.ACR_USERNAME }} \
-            --registry-password ${{ secrets.ACR_PASSWORD }} \
-            --target-port 8080 \
-            --ingress external \
-            --env-vars \
-              "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
-              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
-              "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}" \
-          || \
           az containerapp update \
             --name ${{ secrets.CONTAINER_APP_NAME }} \
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
