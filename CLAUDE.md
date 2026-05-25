@@ -36,8 +36,10 @@ Deployed on **Azure Container Apps** via GitHub Actions CI/CD → Azure Containe
 - `handlers/slip.go` — รับ multipart/form-data, stream ไป Blob, เก็บ URL ใน DB
 - ไฟล์ถูกเก็บที่: `https://<account>.blob.core.windows.net/slips/<filename>`
 - Blob URL ถูก store ใน `slip_uploads.path` column
+- Blob container ตั้งเป็น **Private** — ไม่สามารถเปิด URL ตรงจาก browser ได้ (ต้องใช้ SAS URL)
 - Max upload size: 10 MB. Allowed types: jpg, png, gif, webp, pdf.
 - ห้ามเขียน file I/O ลง local disk ในทุก handler — ใช้ `storage.Upload()` เท่านั้น
+- Connection string format: `DefaultEndpointsProtocol=https;AccountName=<name>;AccountKey=<key>;EndpointSuffix=core.windows.net`
 
 ## Config & Environment
 โหลด config ตาม `APP_ENV` env var:
@@ -72,7 +74,7 @@ Deployed on **Azure Container Apps** via GitHub Actions CI/CD → Azure Containe
 - **CI**: `.github/workflows/ci.yml` — `go vet` + `go build` ทุก push/PR
 - **CD**: `.github/workflows/cd.yml` — build Docker image → push ACR → update Container App (trigger on push to `main`)
 - **GitHub Secrets ที่ต้องมี**: `ACR_LOGIN_SERVER`, `ACR_NAME`, `AZURE_CREDENTIALS`, `CONTAINER_APP_NAME`, `RESOURCE_GROUP`
-- **Dockerfile**: multi-stage build, `golang:1.25-alpine` → `alpine:3.19`, non-root user
+- **Dockerfile**: multi-stage build, `golang:1.25` (Debian builder) → `alpine:3.19` runtime, non-root user, static binary (`CGO_ENABLED=0`)
 
 ## Error response format
 All errors return: `{"error": "human readable message"}`
@@ -99,4 +101,5 @@ Status codes: 400 bad input, 401 unauthorized, 409 duplicate email, 500 internal
 - Never commit `.env`, `.env.development`, `.env.production` (gitignored)
 - Never use gorm or sqlx. Use `database/sql` only.
 - Never store passwords in plaintext or with weak hashing (MD5, SHA1).
-- golangci-lint ปิดชั่วคราว (Go 1.25 ยังไม่รองรับ v1.x) — ใช้ `go vet` + `go build` แทน
+- golangci-lint ปิดชั่วคราว (v1.x ไม่รองรับ Go 1.25) — ใช้ `go vet` + `go build` แทน
+- ห้ามใช้ `golang:1.25-alpine` ใน Dockerfile — image นี้มีปัญหาบน Azure Container Apps ใช้ `golang:1.25` (Debian) แทน
